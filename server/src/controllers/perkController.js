@@ -70,9 +70,34 @@ export async function createPerk(req, res, next) {
 // TODO
 // Update an existing perk by ID and validate only the fields that are being updated 
 export async function updatePerk(req, res, next) {
-  
-}
+  try {
+    // build an update schema (same as perkSchema but without defaults, all optional)
+    const updateSchema = Joi.object({
+      title: Joi.string().min(2),
+      description: Joi.string().allow(''),
+      category: Joi.string().valid('food','tech','travel','fitness','other'),
+      discountPercent: Joi.number().min(0).max(100),
+      merchant: Joi.string().allow('')
+    });
 
+    // validate only the fields present in req.body
+    const { value, error } = updateSchema.validate(req.body, { stripUnknown: true });
+    if (error) return res.status(400).json({ message: error.message });
+
+    const doc = await Perk.findByIdAndUpdate(
+      req.params.id,
+      { $set: value }, // update only provided fields
+      { new: true, runValidators: true } // return updated doc & enforce mongoose validators
+    );
+
+    if (!doc) return res.status(404).json({ message: 'Perk not found' });
+
+    res.json({ perk: doc });
+  } catch (err) {
+    if (err.code === 11000) return res.status(409).json({ message: 'Duplicate perk for this merchant' });
+    next(err);
+  }
+}
 
 // Delete a perk by ID
 export async function deletePerk(req, res, next) {

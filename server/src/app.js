@@ -9,6 +9,8 @@ app.use(express.json());
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
 app.use('/api/perks', perkRoutes);
+//app.listen(4000, () => console.log('Server running on port 4000'));\\
+
 
 // Not found
 app.use((req, res, next) => {
